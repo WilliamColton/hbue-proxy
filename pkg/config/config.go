@@ -11,8 +11,8 @@ type Config struct {
 	Key           string //这里不能是[]byte QAQ,只能是string，不然会报错 {  []} illegal base64 data at input byte 4
 }
 
-func ReadConfig(configName string) (Config, error) {
-	config, err := os.ReadFile(configName)
+func ReadConfig(configSrc string) (Config, error) {
+	config, err := os.ReadFile(configSrc)
 	if err != nil {
 		return Config{}, err
 	}
