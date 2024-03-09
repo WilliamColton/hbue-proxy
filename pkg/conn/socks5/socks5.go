@@ -11,8 +11,7 @@ import (
 
 const (
 	IPv4   = "IPv4"
-	IPv6   = "IPv6"
-	Domaim = "Domain"
+	Domain = "Domain"
 )
 
 func GetPort(portData []byte) string {
@@ -25,10 +24,10 @@ func GetAddr(dataType string, address []byte) (string, error) {
 		var ip net.IP
 		ip = address
 		return ip.String(), nil
-	case Domaim:
+	case Domain:
 		return string(address), nil
 	default:
-		return "", errors.New("Exit directly.")
+		return "", errors.New("exit directly")
 	}
 }
 
@@ -36,10 +35,14 @@ func GetAddress(addr string, port string) string {
 	return fmt.Sprintf("%v:%v", addr, port)
 }
 
-func Socks5Handle(s conn.CipherConn) (net.Conn, error) {
+func Handle(s conn.CipherConn) (net.Conn, error) {
 	buf := make([]byte, 512)
-	s.DecodeRead(buf)
-	s.EncodeWrite([]byte{0x05, 0x00})
+	if _, err := s.DecodeRead(buf); err != nil {
+		return nil, err
+	}
+	if _, err := s.EncodeWrite([]byte{0x05, 0x00}); err != nil {
+		return nil, err
+	}
 
 	n, _ := s.DecodeRead(buf)
 	var addr string
@@ -51,23 +54,26 @@ func Socks5Handle(s conn.CipherConn) (net.Conn, error) {
 			return nil, err
 		}
 	case 0x03:
-		addr, err = GetAddr(Domaim, buf[5:n-2])
+		addr, err = GetAddr(Domain, buf[5:n-2])
 		if err != nil {
 			return nil, err
 		}
 	case 0x04:
-		return nil, errors.New("Does not support IPv6.")
+		return nil, errors.New("does not support IPv6")
 	default:
-		return nil, errors.New("Unknown error.")
+		return nil, errors.New("unknown error")
 	}
 	port := GetPort(buf[n-2:])
 	address := GetAddress(addr, port)
 
-	conn, err := net.Dial("tcp", address)
+	serverConn, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
-	s.EncodeWrite([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
-	return conn, err
+	if _, err := s.EncodeWrite([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}); err != nil {
+		return nil, err
+	}
+
+	return serverConn, err
 }

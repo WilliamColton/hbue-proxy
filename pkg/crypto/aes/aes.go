@@ -2,41 +2,42 @@ package aes
 
 import (
 	"crypto/aes"
-	cipher2 "crypto/cipher"
+	cipherpkg "crypto/cipher"
+
 	"github.com/WilliamColton/hbue-proxy/pkg/crypto"
 )
 
 const blockSize = 16
 
-type AESCipher struct {
+type Cipher struct {
 	key []byte
 	iv  []byte
 }
 
 func NewAESCipher(key, iv []byte) crypto.Cipher {
-	return &AESCipher{
+	return &Cipher{
 		key: key,
 		iv:  iv,
 	}
 }
 
-func (a *AESCipher) Encode(buf []byte) ([]byte, error) {
+func (a *Cipher) Encode(buf []byte) ([]byte, error) {
 	block := crypto.PKCS7Padding(buf, blockSize)
 	cipher, err := aes.NewCipher(a.key)
 	if err != nil {
 		return nil, err
 	}
-	CBCEncrypter := cipher2.NewCBCEncrypter(cipher, a.iv)
-	CBCEncrypter.CryptBlocks(block, block)
+	CBCEncrypt := cipherpkg.NewCBCEncrypter(cipher, a.iv)
+	CBCEncrypt.CryptBlocks(block, block)
 	return block, nil
 }
 
-func (a *AESCipher) Decode(buf []byte) ([]byte, error) {
+func (a *Cipher) Decode(buf []byte) ([]byte, error) {
 	cipher, err := aes.NewCipher(a.key)
 	if err != nil {
 		return nil, err
 	}
-	CBCDecrypter := cipher2.NewCBCDecrypter(cipher, a.iv)
-	CBCDecrypter.CryptBlocks(buf, buf)
+	CBCDecrypt := cipherpkg.NewCBCDecrypter(cipher, a.iv)
+	CBCDecrypt.CryptBlocks(buf, buf)
 	return crypto.UnPKCS7Padding(buf), nil
 }

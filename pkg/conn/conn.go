@@ -1,5 +1,4 @@
-//将具体的加密方式抽象出来，在具体的Local和Server实现中再传入加解密的对象
-
+// 将具体的加密方式抽象出来，在具体的Local和Server实现中再传入加解密的对象
 package conn
 
 import (
